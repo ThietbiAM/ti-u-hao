@@ -315,6 +315,15 @@ function ensureAdmin(){
         });
       });
     }
+    // Doc admin đã tồn tại (có thể từ app cũ) -> vá các trường bắt buộc, không khóa admin
+    var d=snap.data()||{};
+    var patch={active:true,role:'admin',username:'admin',displayName:d.displayName||'Quản trị viên'};
+    var ph=String(d.passwordHash||'');
+    var needPw=!ph || (ph.indexOf('sh_')!==0 && ph.indexOf('dj_')!==0);
+    if(needPw){
+      return hashPw('hvbg2025').then(function(h){patch.passwordHash=h; return db.collection('users').doc('admin').set(patch,{merge:true});});
+    }
+    return db.collection('users').doc('admin').set(patch,{merge:true});
   });
 }
 function doLogin(username,password){
@@ -323,7 +332,7 @@ function doLogin(username,password){
     return db.collection('users').doc(username).get().then(function(snap){
       if(!snap.exists)throw new Error('Tài khoản không tồn tại');
       var u=snap.data();
-      if(!u.active)throw new Error('Tài khoản đã bị khóa');
+      if(u.active===false)throw new Error('Tài khoản đã bị khóa');
       if(u.passwordHash!==h)throw new Error('Sai mật khẩu');
       var sess={username:u.username,displayName:u.displayName,role:u.role,workshopId:u.workshopId||null};
       localStorage.setItem(SESSION_KEY,JSON.stringify(sess));
@@ -335,7 +344,7 @@ function doLogin(username,password){
 function restoreSession(){
   try{var s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(!s)return Promise.resolve(null);
     return db.collection('users').doc(s.username).get().then(function(snap){
-      if(!snap.exists||!snap.data().active){localStorage.removeItem(SESSION_KEY);return null;}
+      if(!snap.exists||snap.data().active===false){localStorage.removeItem(SESSION_KEY);return null;}
       var u=snap.data();state.user={username:u.username,displayName:u.displayName,role:u.role,workshopId:u.workshopId||null};return state.user;
     });
   }catch(e){return Promise.resolve(null);}
