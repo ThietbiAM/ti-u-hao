@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quản lý vật tư tiêu hao</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6fa; --card:#ffffff; --text:#0f172a; --muted:#64748b; --border:#e2e8f0;
+  --primary:#2563eb; --primary-dark:#1d4ed8; --primary-soft:#eff6ff;
+  --success:#16a34a; --success-soft:#f0fdf4; --danger:#dc2626; --danger-soft:#fef2f2;
+  --warning:#d97706; --warning-soft:#fffbeb; --info:#0891b2; --info-soft:#ecfeff;
+  --sidebar:#0f172a; --sidebar-text:#94a3b8; --sidebar-active:#1e293b;
+  --shadow:0 1px 3px rgba(15,23,42,.06),0 1px 2px rgba(15,23,42,.04);
+  --shadow-lg:0 10px 30px rgba(15,23,42,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:'Public Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.hidden{display:none!important}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:inherit;font-size:14px;color:var(--text)}
+a{color:var(--primary);text-decoration:none}
+
+/* ===== Login ===== */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:radial-gradient(1200px 600px at 80% -10%,rgba(37,99,235,.18),transparent 60%),
+             radial-gradient(900px 500px at 0% 110%,rgba(8,145,178,.14),transparent 60%),var(--bg)}
+.login-card{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);padding:36px 32px}
+.login-logo{width:56px;height:56px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#0891b2);display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:18px}
+.login-card h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.login-card .sub{color:var(--muted);margin:6px 0 24px;font-size:13.5px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);border-radius:10px;background:#fff;outline:none;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:600;font-size:14px;transition:all .15s;border:1.5px solid transparent;white-space:nowrap}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:var(--primary-dark)}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-secondary{background:var(--card);border-color:var(--border);color:var(--text)}
+.btn-secondary:hover{border-color:#cbd5e1;background:#f8fafc}
+.btn-danger{background:var(--danger-soft);color:var(--danger);border-color:#fecaca}
+.btn-danger:hover{background:#fee2e2}
+.btn-success{background:var(--success);color:#fff}
+.btn-success:hover{background:#15803d}
+.btn-ghost{color:var(--muted)}
+.btn-ghost:hover{color:var(--text);background:#f1f5f9}
+.btn-sm{padding:6px 12px;font-size:12.5px;border-radius:8px}
+.btn-block{width:100%}
+.login-error{background:var(--danger-soft);color:var(--danger);border:1px solid #fecaca;border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:14px;display:none}
+.login-foot{margin-top:20px;text-align:center;color:var(--muted);font-size:12px}
+
+/* ===== App shell ===== */
+#app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--sidebar);color:var(--sidebar-text);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:40;transition:transform .25s}
+.sidebar-brand{display:flex;align-items:center;gap:12px;padding:20px 20px 18px;border-bottom:1px solid rgba(148,163,184,.12)}
+.sidebar-brand .logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,var(--primary),#0891b2);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0}
+.sidebar-brand .logo svg{width:20px;height:20px}
+.sidebar-brand .name{color:#fff;font-weight:700;font-size:15px;line-height:1.25}
+.sidebar-brand .name small{display:block;color:var(--sidebar-text);font-weight:500;font-size:11.5px;margin-top:2px}
+.sidebar-nav{flex:1;overflow-y:auto;padding:14px 12px}
+.nav-section{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#64748b;padding:12px 12px 6px;font-weight:700}
+.nav-item{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:10px;color:var(--sidebar-text);font-weight:500;font-size:13.5px;cursor:pointer;transition:all .15s;margin-bottom:2px;width:100%;text-align:left}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-item:hover{background:rgba(148,163,184,.08);color:#e2e8f0}
+.nav-item.active{background:var(--sidebar-active);color:#fff;font-weight:600;box-shadow:inset 2px 0 0 var(--primary)}
+.sidebar-foot{padding:14px 16px;border-top:1px solid rgba(148,163,184,.12);font-size:11.5px;color:#64748b}
+.main{flex:1;margin-left:260px;display:flex;flex-direction:column;min-width:0}
+.topbar{background:var(--card);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:gap;gap:16px;position:sticky;top:0;z-index:30}
+.topbar .page-title{font-size:17px;font-weight:700;letter-spacing:-.01em}
+.topbar .page-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:12px}
+.user-chip{display:flex;align-items:center;gap:10px;padding:6px 12px 6px 6px;background:var(--primary-soft);border-radius:999px;border:1px solid #bfdbfe}
+.user-chip .avatar{width:30px;height:30px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px}
+.user-chip .u-name{font-weight:600;font-size:13px;line-height:1.2}
+.user-chip .u-role{font-size:11px;color:var(--muted)}
+.content{padding:24px 28px 60px;max-width:1400px;width:100%}
+.menu-toggle{display:none;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--text)}
+#sidebarOverlay{display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:35}
+
+/* ===== Cards & tables ===== */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
+.card-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.card-head h3{font-size:15px;font-weight:700}
+.card-head .spacer{flex:1}
+.card-body{padding:20px}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary)}
+.stat-card.warn::before{background:var(--warning)}
+.stat-card.danger::before{background:var(--danger)}
+.stat-card.success::before{background:var(--success)}
+.stat-card .label{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.stat-card .value{font-size:26px;font-weight:800;margin-top:6px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.stat-card .foot{font-size:12px;color:var(--muted);margin-top:4px}
+.table-wrap{overflow-x:auto}
+table.data{width:100%;border-collapse:collapse;font-size:13.5px}
+table.data th{background:#f8fafc;text-align:left;padding:11px 14px;font-weight:700;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap;position:sticky;top:0}
+table.data td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+table.data tr:last-child td{border-bottom:none}
+table.data tbody tr:hover{background:#f8fafc}
+.num{font-variant-numeric:tabular-nums;font-weight:600;text-align:right}
+.thumb{width:42px;height:42px;border-radius:8px;object-fit:cover;border:1px solid var(--border);background:#f1f5f9;flex-shrink:0}
+.thumb-big{width:64px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--border);background:#f1f5f9}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.badge-blue{background:var(--primary-soft);color:var(--primary-dark)}
+.badge-green{background:var(--success-soft);color:var(--success)}
+.badge-red{background:var(--danger-soft);color:var(--danger)}
+.badge-amber{background:var(--warning-soft);color:var(--warning)}
+.badge-cyan{background:var(--info-soft);color:var(--info)}
+.badge-gray{background:#f1f5f9;color:#475569}
+.row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.icon-btn{width:30px;height:30px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s;border:1px solid transparent}
+.icon-btn:hover{background:#f1f5f9;color:var(--text);border-color:var(--border)}
+.icon-btn.danger:hover{background:var(--danger-soft);color:var(--danger);border-color:#fecaca}
+.icon-btn svg{width:15px;height:15px}
+.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.search-box{position:relative;flex:1;min-width:200px;max-width:360px}
+.search-box svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--muted)}
+.search-box input{width:100%;padding:9px 12px 9px 34px;border:1.5px solid var(--border);border-radius:10px;outline:none;background:#fff}
+.search-box input:focus{border-color:var(--primary)}
+select.filter{padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;background:#fff;outline:none;min-width:140px}
+.empty-state{padding:48px 20px;text-align:center;color:var(--muted)}
+.empty-state svg{width:40px;height:40px;margin-bottom:12px;opacity:.5}
+.grid-2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.stock-hint{font-size:12px;color:var(--muted);margin-top:5px}
+.stock-hint b{color:var(--text)}
+.qty-input{width:110px;padding:7px 10px;border:1.5px solid var(--border);border-radius:8px;text-align:right}
+.qty-input:focus{border-color:var(--primary);outline:none}
+.consume-row{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+.checkbox-group{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:12px}
+.check-item{display:flex;align-items:center;gap:9px;font-size:13.5px;cursor:pointer}
+.check-item input{width:16px;height:16px;accent-color:var(--primary)}
+.help-text{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+.help-text code{background:#f1f5f9;padding:1px 6px;border-radius:5px;font-size:11.5px}
+.dropzone{border:2px dashed var(--border);border-radius:12px;padding:22px;text-align:center;color:var(--muted);cursor:pointer;transition:all .15s;background:#fafbfc}
+.dropzone:hover,.dropzone.drag{border-color:var(--primary);background:var(--primary-soft);color:var(--primary)}
+.dropzone svg{width:28px;height:28px;margin-bottom:8px}
+.preview-table{max-height:260px;overflow:auto;border:1px solid var(--border);border-radius:10px;margin-top:12px}
+.result-box{background:var(--success-soft);border:1px solid #bbf7d0;color:#166534;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:12px}
+.result-box.err{background:var(--danger-soft);border-color:#fecaca;color:var(--danger)}
+
+/* ===== Modal & toast ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+.modal{background:var(--card);border-radius:16px;box-shadow:var(--shadow-lg);width:100%;max-width:560px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden;animation:pop .18s ease-out}
+.modal.wide{max-width:820px}
+@keyframes pop{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:none}}
+.modal-head{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.modal-head h3{font-size:16px;font-weight:700}
+.modal-close{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.modal-close:hover{background:#f1f5f9;color:var(--text)}
+.modal-body{padding:22px;overflow-y:auto}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+#toastRoot{position:fixed;top:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:10px;max-width:360px}
+.toast{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--primary);border-radius:10px;padding:12px 16px;box-shadow:var(--shadow-lg);font-size:13.5px;font-weight:500;animation:slideIn .25s ease-out;display:flex;align-items:center;gap:10px}
+.toast.success{border-left-color:var(--success)}
+.toast.error{border-left-color:var(--danger)}
+.toast.warn{border-left-color:var(--warning)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+.loading-overlay{position:fixed;inset:0;background:rgba(244,246,250,.9);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted)}
+.spinner{width:38px;height:38px;border:3.5px solid #dbeafe;border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+.mt-1{margin-top:6px}.mt-2{margin-top:12px}.mt-3{margin-top:18px}.mb-2{margin-bottom:12px}
+.flex{display:flex;align-items:center;gap:8px}.flex-between{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.strong{font-weight:700}
+.truncate{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none}
+  #sidebarOverlay.show{display:block}
+  .main{margin-left:0}
+  .menu-toggle{display:inline-flex}
+  .content{padding:16px}
+  .topbar{padding:12px 16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ LOGIN ============ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+    </div>
+    <h1>Quản lý vật tư tiêu hao</h1>
+    <p class="sub">Hệ thống quản lý kho tổng &amp; các xưởng — dữ liệu đồng bộ thời gian thực</p>
+    <div id="loginError" class="login-error"></div>
+    <form id="loginForm">
+      <div class="field">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="loginUser" autocomplete="username" placeholder="Nhập tài khoản" required>
+      </div>
+      <div class="field">
+        <label>Mật khẩu</label>
+        <input type="password" id="loginPass" autocomplete="current-password" placeholder="Nhập mật khẩu" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="loginBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" x2="3" y1="12" y2="12"/></svg>
+        Đăng nhập
+      </button>
+    </form>
+    <div class="login-foot">Liên hệ quản trị viên để được cấp tài khoản xưởng</div>
+  </div>
+</div>
+
+<!-- ============ APP ============ -->
+<div id="app" class="hidden">
+  <div id="sidebarOverlay"></div>
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></div>
+      <div class="name">VLTT<small>Quản lý vật tư tiêu hao</small></div>
+    </div>
+    <nav class="sidebar-nav" id="sidebarNav"></nav>
+    <div class="sidebar-foot">Dữ liệu lưu trên Firebase<br>v1.0 · Kho tổng</div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="menu"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+      <div>
+        <div class="page-title" id="pageTitle">Tổng quan</div>
+        <div class="page-sub" id="pageSub"></div>
+      </div>
+      <div class="topbar-right">
+        <div class="user-chip">
+          <div class="avatar" id="userAvatar">A</div>
+          <div>
+            <div class="u-name" id="userName">—</div>
+            <div class="u-role" id="userRole">—</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" id="logoutBtn">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          Thoát
+        </button>
+      </div>
+    </header>
+    <main class="content" id="viewContainer"></main>
+  </div>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+<div class="loading-overlay hidden" id="loadingOverlay"><div class="spinner"></div><div id="loadingText">Đang tải dữ liệu…</div></div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@0.469.0/dist/umd/lucide.min.js"></script>
+
+<script>
+(function(){
+'use strict';
+
+/* ==================== FIREBASE INIT ==================== */
+var firebaseConfig = {
+  apiKey: "AIzaSyCdNWn31Q5UUF2-aY1IWdrGszKrwOxvCbE",
+  authDomain: "quan-ly-don-hang-7e007.firebaseapp.com",
+  projectId: "quan-ly-don-hang-7e007",
+  storageBucket: "quan-ly-don-hang-7e007.firebasestorage.app",
+  messagingSenderId: "111705752235",
+  appId: "1:111705752235:web:c201a3f824acf2fc3cadee",
+  measurementId: "G-K5BB64NGXH"
+};
+firebase.initializeApp(firebaseConfig);
+var db = firebase.firestore();
+var storage = firebase.storage();
+var SESSION_KEY = 'vltt_session_v1';
+
+/* ==================== HELPERS ==================== */
+var $ = function(s,r){return (r||document).querySelector(s);};
+var $$ = function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(n){return new Intl.NumberFormat('vi-VN').format(Number(n)||0);}
+function fmtDate(ts){if(!ts)return'—';var d=(ts&&ts.toDate)?ts.toDate():new Date(ts);var p=function(x){return (x<10?'0':'')+x;};return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function noAccent(s){return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();}
+function toast(msg,type){var root=$('#toastRoot');var el=document.createElement('div');el.className='toast '+(type||'');el.textContent=msg;root.appendChild(el);setTimeout(function(){el.style.opacity='0';el.style.transition='opacity .3s';setTimeout(function(){el.remove();},300);},3200);}
+function showLoading(txt){$('#loadingText').textContent=txt||'Đang xử lý…';$('#loadingOverlay').classList.remove('hidden');}
+function hideLoading(){$('#loadingOverlay').classList.add('hidden');}
+function refreshIcons(){if(window.lucide)try{lucide.createIcons();}catch(e){}}
+
+/* ==================== PASSWORD HASH ==================== */
+function djb2(str){var h=5381;for(var i=0;i<str.length;i++){h=((h<<5)+h)+str.charCodeAt(i);h=h>>>0;}return 'dj_'+h.toString(16);}
+function hashPw(pw){
+  if(window.crypto&&crypto.subtle&&crypto.subtle.digest){
+    var data=new TextEncoder().encode(pw+'::vltt::salt');
+    return crypto.subtle.digest('SHA-256',data).then(function(buf){
+      var h=Array.prototype.map.call(new Uint8Array(buf),function(b){return ('00'+b.toString(16)).slice(-2);}).join('');
+      return 'sh_'+h;
+    }).catch(function(){return Promise.resolve(djb2(pw));});
+  }
+  return Promise.resolve(djb2(pw));
+}
+
+/* ==================== STATE ==================== */
+var state={user:null,workshops:[],materials:[],inv:{},tab:'dashboard'};
+
+/* ==================== AUTH ==================== */
+function ensureAdmin(){
+  return db.collection('users').doc('admin').get().then(function(snap){
+    if(!snap.exists){
+      return hashPw('hvbg2025').then(function(h){
+        return db.collection('users').doc('admin').set({
+          username:'admin',displayName:'Quản trị viên',passwordHash:h,role:'admin',active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+        });
+      });
+    }
+  });
+}
+function doLogin(username,password){
+  username=String(username||'').trim().toLowerCase();
+  return hashPw(password).then(function(h){
+    return db.collection('users').doc(username).get().then(function(snap){
+      if(!snap.exists)throw new Error('Tài khoản không tồn tại');
+      var u=snap.data();
+      if(!u.active)throw new Error('Tài khoản đã bị khóa');
+      if(u.passwordHash!==h)throw new Error('Sai mật khẩu');
+      var sess={username:u.username,displayName:u.displayName,role:u.role,workshopId:u.workshopId||null};
+      localStorage.setItem(SESSION_KEY,JSON.stringify(sess));
+      state.user=sess;
+      return sess;
+    });
+  });
+}
+function restoreSession(){
+  try{var s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');if(!s)return Promise.resolve(null);
+    return db.collection('users').doc(s.username).get().then(function(snap){
+      if(!snap.exists||!snap.data().active){localStorage.removeItem(SESSION_KEY);return null;}
+      var u=snap.data();state.user={username:u.username,displayName:u.displayName,role:u.role,workshopId:u.workshopId||null};return state.user;
+    });
+  }catch(e){return Promise.resolve(null);}
+}
+function logout(){localStorage.removeItem(SESSION_KEY);state.user=null;location.reload();}
+
+/* ==================== DATA LOAD ==================== */
+function loadCore(){
+  return Promise.all([
+    db.collection('workshops').orderBy('name').get().then(function(q){state.workshops=q.docs.map(function(d){return Object.assign({id:d.id},d.data());});}),
+    db.collection('materials').orderBy('name').get().then(function(q){state.materials=q.docs.map(function(d){return Object.assign({id:d.id},d.data());});}),
+    db.collection('inventory').get().then(function(q){state.inv={};q.docs.forEach(function(d){state.inv[d.id]=d.data();});})
+  ]);
+}
+function workshopName(id){var w=state.workshops.find(function(x){return x.id===id;});return w?w.name:'(Đã xóa)';}
+function invOf(mid){return state.inv[mid]||{central:0,byWorkshop:{}};}
+function centralOf(mid){return invOf(mid).central||0;}
+function wsStock(mid,wid){var bw=invOf(mid).byWorkshop||{};return bw[wid]||0;}
+function visibleMaterials(){
+  if(state.user.role==='admin')return state.materials.slice();
+  var wid=state.user.workshopId;
+  return state.materials.filter(function(m){var aw=m.assignedWorkshops||[];return aw.length===0||aw.indexOf(wid)>=0;});
+}
+
+/* ==================== STOCK OPERATIONS (atomic) ==================== */
+function stockOp(opts){
+  // opts: type, materialId, workshopId, centralDelta, workshopDelta, quantity, note, absolute
+  var m=state.materials.find(function(x){return x.id===opts.materialId;});
+  if(!m)return Promise.reject(new Error('Vật tư không tồn tại'));
+  var invRef=db.collection('inventory').doc(opts.materialId);
+  return db.runTransaction(function(t){
+    return t.get(invRef).then(function(snap){
+      var old=snap.exists?snap.data():{central:0,byWorkshop:{}};
+      var central=old.central||0;var bw=Object.assign({},old.byWorkshop||{});
+      if(opts.absolute!==null&&opts.absolute!==undefined){
+        if(opts.workshopId)bw[opts.workshopId]=Number(opts.absolute);else central=Number(opts.absolute);
+      }else{
+        central+=Number(opts.centralDelta)||0;
+        if(opts.workshopId)bw[opts.workshopId]=(bw[opts.workshopId]||0)+(Number(opts.workshopDelta)||0);
+      }
+      if(central<0)throw new Error('Số lượng kho tổng không đủ (còn '+fmt(old.central||0)+' '+esc(m.unit||'')+')');
+      if(opts.workshopId&&(bw[opts.workshopId]||0)<0)throw new Error('Số lượng tại xưởng không đủ (còn '+fmt((old.byWorkshop||{})[opts.workshopId]||0)+' '+esc(m.unit||'')+')');
+      t.set(invRef,{central:central,byWorkshop:bw,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+      var tRef=db.collection('transactions').doc();
+      t.set(tRef,{
+        type:opts.type,materialId:opts.materialId,materialCode:m.code||'',materialName:m.name||'',
+        unit:m.unit||'',workshopId:opts.workshopId||null,quantity:Number(opts.quantity)||0,
+        centralDelta:Number(opts.centralDelta)||0,workshopDelta:Number(opts.workshopDelta)||0,
+        note:opts.note||'',createdBy:state.user.username,createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    });
+  });
+}
+
+/* ==================== IMAGE UPLOAD ==================== */
+function uploadImage(file,folder){
+  var name=Date.now()+'_'+(file.name||'img').replace(/[^a-zA-Z0-9._-]/g,'_');
+  var ref=storage.ref(folder+'/'+name);
+  return ref.put(file).then(function(snap){return snap.ref.getDownloadURL().then(function(url){return {url:url,path:folder+'/'+name};});});
+}
+
+/* ==================== MODAL ==================== */
+function openModal(opts){
+  var root=$('#modalRoot');
+  var ov=document.createElement('div');ov.className='modal-overlay';
+  ov.innerHTML='<div class="modal '+(opts.wide?'wide':'')+'">'+
+    '<div class="modal-head"><h3>'+esc(opts.title)+'</h3><button class="modal-close" data-close><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg></button></div>'+
+    '<div class="modal-body">'+(opts.body||'')+'</div>'+
+    (opts.footer?'<div class="modal-foot">'+opts.footer+'</div>':'')+'</div>';
+  root.appendChild(ov);
+  var close=function(){ov.remove();};
+  ov.addEventListener('click',function(e){if(e.target===ov||e.target.closest('[data-close]'))close();});
+  if(opts.onMount)setTimeout(function(){opts.onMount(ov,close);},0);
+  return {el:ov,close:close};
+}
+
+/* ==================== NAV / RENDER ==================== */
+var ADMIN_NAV=[
+  {id:'dashboard',icon:'layout-dashboard',label:'Tổng quan'},
+  {id:'materials',icon:'package',label:'Danh mục vật tư'},
+  {id:'workshops',icon:'warehouse',label:'Kho xưởng & tài khoản'},
+  {id:'ops',icon:'arrow-left-right',label:'Phát / Thu hồi / Sửa SL'},
+  {id:'receive',icon:'package-plus',label:'Nhập hàng kho tổng'},
+  {id:'summary',icon:'table-properties',label:'Tổng hợp tồn kho'},
+  {id:'history',icon:'history',label:'Lịch sử giao dịch'},
+  {id:'password',icon:'key-round',label:'Đổi mật khẩu'}
+];
+var WORKSHOP_NAV=[
+  {id:'mymaterials',icon:'package',label:'Vật tư & tiêu hao'},
+  {id:'myhistory',icon:'history',label:'Lịch sử tiêu hao'},
+  {id:'password',icon:'key-round',label:'Đổi mật khẩu'}
+];
+var TITLES={
+  dashboard:['Tổng quan','Theo dõi tình hình kho tổng & các xưởng'],
+  materials:['Danh mục vật tư','Quản lý vật tư, phân bổ xưởng sử dụng, nhập Excel'],
+  workshops:['Kho xưởng & tài khoản','Tạo xưởng và cấp tài khoản đăng nhập'],
+  ops:['Phát / Thu hồi / Chỉnh sửa','Điều chuyển số lượng giữa kho tổng và các xưởng'],
+  receive:['Nhập hàng kho tổng','Ghi nhận hàng nhập trong tháng & lịch sử'],
+  summary:['Tổng hợp tồn kho','Kiểm tra số lượng còn lại để cân đối đặt hàng'],
+  history:['Lịch sử giao dịch','Tất cả phát sinh được lưu lại'],
+  mymaterials:['Vật tư & tiêu hao','Các vật tư dùng chung và của xưởng bạn'],
+  myhistory:['Lịch sử tiêu hao','Giao dịch phát sinh của xưởng bạn'],
+  password:['Đổi mật khẩu','Cập nhật mật khẩu đăng nhập']
+};
+function renderNav(){
+  var nav=state.user.role==='admin'?ADMIN_NAV:WORKSHOP_NAV;
+  $('#sidebarNav').innerHTML='<div class="nav-section">Điều hướng</div>'+nav.map(function(n){
+    return '<button class="nav-item '+(state.tab===n.id?'active':'')+'" data-tab="'+n.id+'"><i data-lucide="'+n.icon+'"></i>'+esc(n.label)+'</button>';
+  }).join('');
+  $$('#sidebarNav .nav-item').forEach(function(b){b.addEventListener('click',function(){switchTab(b.dataset.tab);});});
+  refreshIcons();
+}
+function switchTab(id){state.tab=id;renderNav();renderView();$('#sidebar').classList.remove('open');$('#sidebarOverlay').classList.remove('show');}
+function renderView(){
+  var t=TITLES[state.tab]||['',''];
+  $('#pageTitle').textContent=t[0];$('#pageSub').textContent=t[1];
+  var c=$('#viewContainer');
+  c.innerHTML='';
+  var fn={dashboard:renderDashboard,materials:renderMaterials,workshops:renderWorkshops,ops:renderOps,receive:renderReceive,summary:renderSummary,history:renderHistory,mymaterials:renderMyMaterials,myhistory:renderMyHistory,password:renderPassword}[state.tab];
+  if(fn)fn(c);
+  refreshIcons();
+}
+
+/* ==================== ADMIN: DASHBOARD ==================== */
+function renderDashboard(c){
+  var totalTypes=state.materials.length;
+  var totalCentral=state.materials.reduce(function(s,m){return s+centralOf(m.id);},0);
+  var outOfStock=state.materials.filter(function(m){return centralOf(m.id)<=0;}).length;
+  var firstDay=new Date();firstDay.setDate(1);firstDay.setHours(0,0,0,0);
+  db.collection('transactions').where('createdAt','>=',firebase.firestore.Timestamp.fromDate(firstDay)).get().then(function(q){
+    $('#txMonth').textContent=fmt(q.size);
+  }).catch(function(){$('#txMonth').textContent='—';});
+  c.innerHTML=
+  '<div class="stat-grid">'+
+    '<div class="stat-card"><div class="label">Số loại vật tư</div><div class="value">'+fmt(totalTypes)+'</div><div class="foot">Trong danh mục</div></div>'+
+    '<div class="stat-card success"><div class="label">Tồn kho tổng</div><div class="value">'+fmt(totalCentral)+'</div><div class="foot">Tổng SL kho tổng (khác đơn vị)</div></div>'+
+    '<div class="stat-card"><div class="label">Số xưởng</div><div class="value">'+fmt(state.workshops.length)+'</div><div class="foot">Đang hoạt động</div></div>'+
+    '<div class="stat-card '+(outOfStock>0?'danger':'')+'"><div class="label">Vật tư hết hàng</div><div class="value">'+fmt(outOfStock)+'</div><div class="foot">Kho tổng = 0, cần đặt hàng</div></div>'+
+    '<div class="stat-card warn"><div class="label">Giao dịch tháng này</div><div class="value" id="txMonth">…</div><div class="foot">Phát / thu hồi / tiêu hao / nhập</div></div>'+
+  '</div>'+
+  '<div class="card"><div class="card-head"><h3>Giao dịch gần nhất</h3><div class="spacer"></div><button class="btn btn-secondary btn-sm" id="viewAllTx">Xem toàn bộ</button></div>'+
+  '<div class="table-wrap"><table class="data"><thead><tr><th>Thời gian</th><th>Loại</th><th>Vật tư</th><th>Số lượng</th><th>Xưởng</th><th>Người thực hiện</th><th>Ghi chú</th></tr></thead><tbody id="recentTx"><tr><td colspan="7" class="muted">Đang tải…</td></tr></tbody></table></div></div>';
+  $('#viewAllTx').addEventListener('click',function(){switchTab('history');});
+  db.collection('transactions').orderBy('createdAt','desc').limit(15).get().then(function(q){
+    var rows=q.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    $('#recentTx').innerHTML=rows.length?rows.map(txRow).join(''):'<tr><td colspan="7" class="empty-state">Chưa có giao dịch nào</td></tr>';
+  }).catch(function(e){$('#recentTx').innerHTML='<tr><td colspan="7" class="muted">Lỗi tải: '+esc(e.message)+'</td></tr>';});
+}
+function txTypeBadge(type){
+  var map={receive:['Nhập hàng','badge-green'],distribute:['Phát hàng','badge-blue'],recall:['Thu hồi','badge-amber'],consume:['Tiêu hao','badge-red'],adjust:['Chỉnh sửa','badge-cyan'],import:['Nhập Excel','badge-gray']};
+  var m=map[type]||[type,'badge-gray'];
+  return '<span class="badge '+m[1]+'">'+esc(m[0])+'</span>';
+}
+function txRow(tx){
+  return '<tr><td>'+fmtDate(tx.createdAt)+'</td><td>'+txTypeBadge(tx.type)+'</td>'+
+  '<td><span class="strong">'+esc(tx.materialName)+'</span><div class="muted small">'+esc(tx.materialCode)+'</div></td>'+
+  '<td class="num">'+fmt(tx.quantity)+' '+esc(tx.unit||'')+'</td>'+
+  '<td>'+(tx.workshopId?esc(workshopName(tx.workshopId)):'<span class="muted">—</span>')+'</td>'+
+  '<td>'+esc(tx.createdBy||'')+'</td><td class="muted small truncate" title="'+esc(tx.note||'')+'">'+esc(tx.note||'')+'</td></tr>';
+}
+
+/* ==================== ADMIN: MATERIALS ==================== */
+function renderMaterials(c){
+  c.innerHTML=
+  '<div class="toolbar">'+
+    '<div class="search-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="matSearch" placeholder="Tìm theo tên, mã vật tư…"></div>'+
+    '<button class="btn btn-primary" id="addMatBtn"><i data-lucide="plus"></i>Thêm vật tư</button>'+
+    '<button class="btn btn-secondary" id="importBtn"><i data-lucide="file-up"></i>Nhập Excel + ảnh</button>'+
+    '<button class="btn btn-secondary" id="tplBtn"><i data-lucide="file-spreadsheet"></i>Tải mẫu Excel</button>'+
+  '</div>'+
+  '<div class="card"><div class="table-wrap"><table class="data"><thead><tr><th>Ảnh</th><th>Mã VT</th><th>Tên vật tư</th><th>ĐVT</th><th>Phân bổ</th><th class="num">Kho tổng</th><th>Thao tác</th></tr></thead><tbody id="matBody"></tbody></table></div></div>';
+  function draw(){
+    var kw=noAccent($('#matSearch').value);
+    var list=state.materials.filter(function(m){return !kw||noAccent(m.name+' '+m.code).indexOf(kw)>=0;});
+    $('#matBody').innerHTML=list.length?list.map(function(m){
+      var aw=m.assignedWorkshops||[];
+      var alloc=aw.length===0?'<span class="badge badge-green">Dùng chung</span>':aw.map(function(w){return '<span class="badge badge-blue">'+esc(workshopName(w))+'</span>';}).join(' ');
+      var sl=centralOf(m.id);
+      return '<tr><td>'+(m.imageUrl?'<img src="'+esc(m.imageUrl)+'" class="thumb" loading="lazy" onerror="this.style.display=\'none\'">':'<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#cbd5e1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg></div>')+'</td>'+
+      '<td class="strong">'+esc(m.code||'')+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.unit||'')+'</td><td style="max-width:260px">'+alloc+'</td>'+
+      '<td class="num '+(sl<=0?'badge-red':'')+'" style="font-weight:700">'+fmt(sl)+'</td>'+
+      '<td><div class="row-actions">'+
+        '<button class="icon-btn" title="Sửa" data-edit="'+m.id+'"><i data-lucide="pencil"></i></button>'+
+        '<button class="icon-btn" title="Đổi ảnh" data-img="'+m.id+'"><i data-lucide="image-plus"></i></button>'+
+        '<button class="icon-btn danger" title="Xóa" data-del="'+m.id+'"><i data-lucide="trash-2"></i></button>'+
+      '</div></td></tr>';
+    }).join(''):'<tr><td colspan="7"><div class="empty-state"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg>Chưa có vật tư nào. Nhập Excel hoặc thêm thủ công.</div></td></tr>';
+    refreshIcons();
+    $$('#matBody [data-edit]').forEach(function(b){b.addEventListener('click',function(){openMaterialModal(b.dataset.edit);});});
+    $$('#matBody [data-img]').forEach(function(b){b.addEventListener('click',function(){openImageModal(b.dataset.img);});});
+    $$('#matBody [data-del]').forEach(function(b){b.addEventListener('click',function(){delMaterial(b.dataset.del);});});
+  }
+  $('#matSearch').addEventListener('input',draw);
+  $('#addMatBtn').addEventListener('click',function(){openMaterialModal(null);});
+  $('#importBtn').addEventListener('click',openImportModal);
+  $('#tplBtn').addEventListener('click',downloadTemplate);
+  draw();
+}
+function openMaterialModal(id){
+  var m=id?state.materials.find(function(x){return x.id===id}):null;
+  var body=
+  '<div class="form-row">'+
+    '<div class="field"><label>Mã vật tư</label><input id="f_code" value="'+esc(m?m.code:'')+'" placeholder="VD: VT001"></div>'+
+    '<div class="field"><label>Tên vật tư *</label><input id="f_name" value="'+esc(m?m.name:'')+'" required></div>'+
+    '<div class="field"><label>Đơn vị tính</label><input id="f_unit" value="'+esc(m?m.unit:'')+'" placeholder="VD: cái, bộ, mét…"></div>'+
+  '</div>'+
+  '<div class="field"><label>Phân bổ xưởng sử dụng</label>'+
+    '<div class="checkbox-group" id="f_aw">'+
+      (state.workshops.length?state.workshops.map(function(w){
+        var chk=m&&(m.assignedWorkshops||[]).indexOf(w.id)>=0?'checked':'';
+        return '<label class="check-item"><input type="checkbox" value="'+w.id+'" '+chk+'> '+esc(w.name)+(w.code?' <span class="muted small">('+esc(w.code)+')</span>':'')+'</label>';
+      }).join(''):'<div class="muted small">Chưa có xưởng nào — tạo xưởng trước. Vật tư sẽ mặc định dùng chung.</div>')+
+    '</div>'+
+    '<div class="help-text">Không tích xưởng nào = <b>dùng chung</b> (mọi xưởng đều xem được). Tích chọn xưởng = vật tư riêng của xưởng đó.</div>'+
+  '</div>';
+  var modal=openModal({title:m?'Sửa vật tư':'Thêm vật tư mới',body:body,wide:true,
+    footer:'<button class="btn btn-secondary" data-close>Hủy</button><button class="btn btn-primary" id="saveMat">Lưu</button>',
+    onMount:function(ov,close){
+      $('#saveMat',ov).addEventListener('click',function(){
+        var name=$('#f_name',ov).value.trim();if(!name){toast('Vui lòng nhập tên vật tư','error');return;}
+        var aw=$$('#f_aw input:checked',ov).map(function(c){return c.value;});
+        var data={code:$('#f_code',ov).value.trim(),name:name,unit:$('#f_unit',ov).value.trim(),assignedWorkshops:aw,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+        var ref=id?db.collection('materials').doc(id):db.collection('materials').doc();
+        showLoading('Đang lưu…');
+        ref.set(data,{merge:true}).then(function(){
+          if(!id)return db.collection('inventory').doc(ref.id).set({central:0,byWorkshop:{},updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+        }).then(function(){close();toast('Đã lưu vật tư','success');return loadCore();}).then(function(){renderView();hideLoading();})
+        .catch(function(e){hideLoading();toast('Lỗi: '+e.message,'error');});
+      });
+    }});
+}
+function openImageModal(id){
+  var m=state.materials.find(function(x){return x.id===id;});
+  var body='<div class="field"><label>Chọn file ảnh (JPG/PNG)</label><input type="file" id="f_img" accept="image/*" class="hidden"><div class="dropzone" id="dz"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg><div>Click để chọn ảnh hoặc kéo thả vào đây</div></div></div>'+
+  '<div id="imgPreview" class="mt-2">'+(m&&m.imageUrl?'<img src="'+esc(m.imageUrl)+'" class="thumb-big">':'<div class="muted small">Chưa có ảnh</div>')+'</div>';
+  var pendingUrl=null,pendingPath=null;
+  openModal({title:'Ảnh vật tư: '+(m?m.name:''),body:body,
+    footer:'<button class="btn btn-secondary" data-close>Đóng</button>',
+    onMount:function(ov){
+      var dz=$('#dz',ov),inp=$('#f_img',ov);
+      dz.addEventListener('click',function(){inp.click();});
+      ['dragover','dragenter'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('drag');});});
+      ['dragleave','drop'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('drag');});});
+      dz.addEventListener('drop',function(e){if(e.dataTransfer.files[0])handle(e.dataTransfer.files[0]);});
+      inp.addEventListener('change',function(){if(inp.files[0])handle(inp.files[0]);});
+      function handle(file){
+        if(file.size>5*1024*1024){toast('Ảnh quá 5MB','error');return;}
+        showLoading('Đang tải ảnh lên…');
+        uploadImage(file,'materials').then(function(r){
+          pendingUrl=r.url;pendingPath=r.path;
+          $('#imgPreview',ov).innerHTML='<img src="'+esc(r.url)+'" class="thumb-big">';
+          return db.collection('materials').doc(id).set({imageUrl:r.url,imagePath:r.path,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+        }).then(function(){hideLoading();toast('Đã cập nhật ảnh','success');return loadCore();}).then(function(){renderView();})
+        .catch(function(e){hideLoading();toast('Lỗi tải ảnh: '+e.message,'error');});
+      }
+    }});
+}
+function delMaterial(id){
+  var m=state.materials.find(function(x){return x.id===id;});
+  if(!confirm('Xóa vật tư "'+m.name+'"? Lịch sử giao dịch vẫn được giữ lại.'))return;
+  showLoading('Đang xóa…');
+  db.collection('materials').doc(id).delete().then(function(){return db.collection('inventory').doc(id).delete().catch(function(){});})
+  .then(function(){toast('Đã xóa','success');return loadCore();}).then(function(){renderView();hideLoading();})
+  .catch(function(e){hideLoading();toast('Lỗi: '+e.message,'error');});
+}
+
+/* ==================== IMPORT EXCEL ==================== */
+function downloadTemplate(){
+  var ws=XLSX.utils.aoa_to_sheet([
+    ['Mã vật tư','Tên vật tư','Đơn vị','Số lượng (kho tổng)','Hình ảnh (tên file ảnh)','Kho sử dụng (mã/tên xưởng, cách nhau dấu phẩy; bỏ trống = dùng chung)'],
+    ['VT001','Găng tay cao su','đôi',100,'gang-tay.jpg','Xưởng cơ khí, Xưởng điện'],
+    ['VT002','Khẩu trang y tế','cái',500,'khau-trang.png','']
+  ]);
+  ws['!cols']=[{wch:12},{wch:24},{wch:10},{wch:18},{wch:22},{wch:50}];
+  var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'VatTu');
+  XLSX.writeFile(wb,'mau-nhap-vat-tu.xlsx');
+}
+function openImportModal(){
+  var body='<div class="help-text" style="margin-bottom:14px">1. Chọn file Excel (.xlsx/.xls/.csv) với các cột: <code>Mã vật tư</code>, <code>Tên vật tư</code>, <code>Đơn vị</code>, <code>Số lượng (kho tổng)</code>, <code>Hình ảnh (tên file)</code>, <code>Kho sử dụng</code>.<br>2. Nếu có ảnh, chọn <b>nhiều file ảnh</b> cùng lúc — hệ thống tự khớp theo tên file với cột "Hình ảnh".<br>3. Bấm "Đọc file" để xem trước, rồi "Xác nhận nhập".</div>'+
+  '<div class="grid-2">'+
+    '<div class="field"><label>File Excel</label><input type="file" id="imp_xlsx" accept=".xlsx,.xls,.csv"></div>'+
+    '<div class="field"><label>File ảnh (chọn nhiều, tùy chọn)</label><input type="file" id="imp_imgs" accept="image/*" multiple></div>'+
+  '</div>'+
+  '<div id="imp_result"></div><div id="imp_preview"></div>';
+  var parsed=null,imgMap={};
+  openModal({title:'Nhập vật tư từ Excel',body:body,wide:true,
+    footer:'<button class="btn btn-secondary" data-close>Hủy</button><button class="btn btn-primary" id="imp_read">Đọc file</button><button class="btn btn-success hidden" id="imp_go">Xác nhận nhập</button>',
+    onMount:function(ov,close){
+      $('#imp_imgs',ov).addEventListener('change',function(){
+        imgMap={};Array.prototype.forEach.call(this.files,function(f){
+          var key=f.name.toLowerCase().replace(/\.[^.]+$/,'');imgMap[key]=f;imgMap[f.name.toLowerCase()]=f;
+        });
+        window.__impImgMap=imgMap;
+        toast('Đã chọn '+this.files.length+' ảnh','success');
+      });
+      $('#imp_read',ov).addEventListener('click',function(){
+        var f=$('#imp_xlsx',ov).files[0];if(!f){toast('Chưa chọn file Excel','error');return;}
+        showLoading('Đang đọc Excel…');
+        var reader=new FileReader();
+        reader.onload=function(e){
+          try{
+            var wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
+            var rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+            parsed=rows.map(normalizeRow).filter(function(r){return r.name;});
+            hideLoading();
+            if(!parsed.length){$('#imp_result',ov).innerHTML='<div class="result-box err">Không đọc được dòng nào có tên vật tư. Kiểm tra lại tiêu đề cột.</div>';return;}
+            var unmatched=parsed.filter(function(r){return r.imageName&&!matchImage(r.imageName);});
+            $('#imp_result',ov).innerHTML='<div class="result-box">Đọc được <b>'+parsed.length+'</b> vật tư. '+
+              (unmatched.length?'<span class="badge badge-amber">'+unmatched.length+' ảnh chưa khớp tên file</span>':'<span class="badge badge-green">Ảnh khớp hết</span>')+
+              ' Vật tư không có ảnh vẫn nhập bình thường, thêm ảnh sau.</div>';
+            $('#imp_preview',ov).innerHTML='<div class="preview-table"><table class="data"><thead><tr><th>#</th><th>Mã</th><th>Tên</th><th>SL</th><th>Ảnh</th><th>Kho sử dụng</th></tr></thead><tbody>'+
+              parsed.slice(0,50).map(function(r,i){return '<tr><td>'+(i+1)+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td class="num">'+fmt(r.qty)+'</td><td class="small">'+esc(r.imageName||'—')+(r.imageName&&!matchImage(r.imageName)?' <span class="badge badge-amber">chưa khớp</span>':'')+'</td><td class="small">'+(r.assignedNames.length?esc(r.assignedNames.join(', ')):'<span class="badge badge-green">chung</span>')+'</td></tr>';}).join('')+
+              '</tbody></table></div><div class="help-text">'+(parsed.length>50?'(Chỉ xem trước 50 dòng đầu)':'')+'</div>';
+            $('#imp_go',ov).classList.remove('hidden');
+          }catch(err){hideLoading();$('#imp_result',ov).innerHTML='<div class="result-box err">Lỗi đọc file: '+esc(err.message)+'</div>';}
+        };
+        reader.readAsArrayBuffer(f);
+      });
+      $('#imp_go',ov).addEventListener('click',function(){
+        if(!parsed||!parsed.length)return;
+        var btn=this;btn.disabled=true;showLoading('Đang tải ảnh & nhập dữ liệu…');
+        // upload matched images first
+        var uploads=parsed.map(function(r){
+          var f=matchImage(r.imageName);if(!f)return Promise.resolve(null);
+          return uploadImage(f,'materials').then(function(res){r._img=res;return res;}).catch(function(){return null;});
+        });
+        Promise.all(uploads).then(function(){
+          // batch write, chunk 200
+          var batches=[],bi=0;batches[0]=db.batch();
+          parsed.forEach(function(r,i){
+            if(i>0&&i%150===0){bi++;batches[bi]=db.batch();}
+            var mRef=db.collection('materials').doc();
+            var data={code:r.code,name:r.name,unit:r.unit,assignedWorkshops:r.assignedIds,createdAt:firebase.firestore.FieldValue.serverTimestamp(),updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+            if(r._img){data.imageUrl=r._img.url;data.imagePath=r._img.path;}
+            batches[bi].set(mRef,data);
+            batches[bi].set(db.collection('inventory').doc(mRef.id),{central:r.qty,byWorkshop:{},updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+            var tRef=db.collection('transactions').doc();
+            batches[bi].set(tRef,{type:'import',materialId:mRef.id,materialCode:r.code,materialName:r.name,unit:r.unit,workshopId:null,quantity:r.qty,centralDelta:r.qty,workshopDelta:0,note:'Nhập từ Excel',createdBy:state.user.username,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+          });
+          return Promise.all(batches.map(function(b){return b.commit();}));
+        }).then(function(){close();toast('Đã nhập '+parsed.length+' vật tư','success');return loadCore();}).then(function(){renderView();hideLoading();})
+        .catch(function(e){hideLoading();btn.disabled=false;toast('Lỗi: '+e.message,'error');});
+      });
+    }});
+}
+function matchImage(name){
+  if(!name)return null;
+  var key=String(name).trim().toLowerCase();
+  // imgMap built in modal closure; this fn references via closure chain — re-implement inline at call site
+  return (window.__impImgMap||{})[key]||(window.__impImgMap||{})[key.replace(/\.[^.]+$/,'')]||null;
+}
+function normalizeRow(row){
+  var out={code:'',name:'',unit:'',qty:0,imageName:'',assignedIds:[],assignedNames:[]};
+  Object.keys(row).forEach(function(k){
+    var h=noAccent(k),v=row[k];
+    if(/ten\s*vat|^ten$|name/.test(h)&&!out.name)out.name=String(v||'').trim();
+    else if(/ma\s*vat|^ma$|code/.test(h)&&!out.code)out.code=String(v||'').trim();
+    else if(/so\s*luong|^sl$|quantity|kho\s*tong/.test(h))out.qty=Number(v)||0;
+    else if(/hinh|^anh$|image|img|picture/.test(h)&&!out.imageName)out.imageName=String(v||'').trim();
+    else if(/kho|xuong|workshop|su\s*dung/.test(h)){
+      var parts=String(v||'').split(/[,;|]/).map(function(s){return s.trim();}).filter(Boolean);
+      parts.forEach(function(p){
+        var found=state.workshops.find(function(w){return noAccent(w.name)===noAccent(p)||noAccent(w.code)===noAccent(p)||w.id===p;});
+        if(found&&out.assignedIds.indexOf(found.id)<0){out.assignedIds.push(found.id);out.assignedNames.push(found.name);}
+        else if(p)out.assignedNames.push(p+' (?)');
+      });
+    }
+    else if(/don\s*vi|^dvt$|unit/.test(h)&&!out.unit)out.unit=String(v||'').trim();
+  });
+  return out;
+}
+
+/* ==================== ADMIN: WORKSHOPS & ACCOUNTS ==================== */
+function renderWorkshops(c){
+  c.innerHTML=
+  '<div class="toolbar"><button class="btn btn-primary" id="addWs"><i data-lucide="plus"></i>Thêm xưởng</button>'+
+  '<button class="btn btn-secondary" id="addAcc"><i data-lucide="user-plus"></i>Cấp tài khoản xưởng</button></div>'+
+  '<div class="grid-2">'+
+    '<div class="card"><div class="card-head"><h3>Danh sách xưởng</h3></div><div class="table-wrap"><table class="data"><thead><tr><th>Tên xưởng</th><th>Mã</th><th>Trạng thái</th><th></th></tr></thead><tbody id="wsBody"></tbody></table></div></div>'+
+    '<div class="card"><div class="card-head"><h3>Tài khoản xưởng</h3></div><div class="table-wrap"><table class="data"><thead><tr><th>Username</th><th>Tên hiển thị</th><th>Xưởng</th><th>Trạng thái</th><th></th></tr></thead><tbody id="accBody"></tbody></table></div></div>'+
+  '</div>';
+  $('#addWs').addEventListener('click',openWorkshopModal);
+  $('#addAcc').addEventListener('click',openAccountModal);
+  $('#wsBody').innerHTML=state.workshops.length?state.workshops.map(function(w){
+    return '<tr><td class="strong">'+esc(w.name)+'</td><td>'+esc(w.code||'')+'</td><td>'+(w.active===false?'<span class="badge badge-red">Khóa</span>':'<span class="badge badge-green">Hoạt động</span>')+'</td>'+
+    '<td><div class="row-actions"><button class="icon-btn" data-wsedit="'+w.id+'"><i data-lucide="pencil"></i></button>'+
+    '<button class="icon-btn '+(w.active===false?'':'danger')+'" data-wstoggle="'+w.id+'" title="'+(w.active===false?'Mở khóa':'Khóa')+'"><i data-lucide="'+(w.active===false?'unlock':'lock')+'"></i></button></div></td></tr>';
+  }).join(''):'<tr><td colspan="4"><div class="empty-state">Chưa có xưởng</div></td></tr>';
+  $$('#wsBody [data-wsedit]').forEach(function(b){b.addEventListener('click',function(){openWorkshopModal(b.dataset.wsedit);});});
+  $$('#wsBody [data-wstoggle]').forEach(function(b){b.addEventListener('click',function(){
+    var w=state.workshops.find(function(x){return x.id===b.dataset.wstoggle;});
+    showLoading();db.collection('workshops').doc(w.id).set({active:!(w.active===false)},{merge:true}).then(function(){toast('Đã cập nhật','success');return loadCore();}).then(function(){renderView();hideLoading();}).catch(function(e){hideLoading();toast(e.message,'error');});
+  });});
+  db.collection('users').where('role','==','workshop').get().then(function(q){
+    var accs=q.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    $('#accBody').innerHTML=accs.length?accs.map(function(a){
+      return '<tr><td class="strong">'+esc(a.username)+'</td><td>'+esc(a.displayName||'')+'</td><td>'+esc(workshopName(a.workshopId))+'</td>'+
+      '<td>'+(a.active===false?'<span class="badge badge-red">Khóa</span>':'<span class="badge badge-green">Hoạt động</span>')+'</td>'+
+      '<td><div class="row-actions"><button class="icon-btn" title="Đặt lại mật khẩu" data-reset="'+a.id+'"><i data-lucide="key-round"></i></button>'+
+      '<button class="icon-btn '+(a.active===false?'':'danger')+'" title="Khóa/mở" data-acctoggle="'+a.id+'"><i data-lucide="'+(a.active===false?'unlock':'lock')+'"></i></button></div></td></tr>';
+    }).join(''):'<tr><td colspan="5"><div class="empty-state">Chưa có tài khoản xưởng</div></td></tr>';
+    refreshIcons();
+    $$('#accBody [data-reset]').forEach(function(b){b.addEventListener('click',function(){resetPassword(b.dataset.reset);});});
+    $$('#accBody [data-acctoggle]').forEach(function(b){b.addEventListener('click',function(){
+      var a=accs.find(function(x){return x.id===b.dataset.acctoggle;});
+      showLoading();db.collection('users').doc(a.id).set({active:!(a.active===false)},{merge:true}).then(function(){toast('Đã cập nhật','success');renderView();hideLoading();}).catch(function(e){hideLoading();toast(e.message,'error');});
+    });});
+  });
+  refreshIcons();
+}
+function openWorkshopModal(id){
+  var w=id?state.workshops.find(function(x){return x.id===id}):null;
+  var body='<div class="form-row"><div class="field"><label>Tên xưởng *</label><input id="w_name" value="'+esc(w?w.name:'')+'" placeholder="VD: Xưởng cơ khí"></div>'+
+  '<div class="field"><label>Mã xưởng</label><input id="w_code" value="'+esc(w?w.code:'')+'" placeholder="VD: CK"></div></div>';
+  openModal({title:w?'Sửa xưởng':'Thêm xưởng mới',body:body,
+    footer:'<button class="btn btn-secondary" data-close>Hủy</button><button class="btn btn-primary" id="saveWs">Lưu</button>',
+    onMount:function(ov,close){
+      $('#saveWs',ov).addEventListener('click',function(){
+        var name=$('#w_name',ov).value.trim();if(!name){toast('Nhập tên xưởng','error');return;}
+        var ref=id?db.collection('workshops').doc(id):db.collection('workshops').doc();
+        showLoading();ref.set({name:name,code:$('#w_code',ov).value.trim(),active:true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true})
+        .then(function(){close();toast('Đã lưu','success');return loadCore();}).then(function(){renderView();hideLoading();}).catch(function(e){hideLoading();toast(e.message,'error');});
+      });
+    }});
+}
+function openAccountModal(){
+  if(!state.workshops.length){toast('Cần tạo xưởng trước','warn');return;}
+  var body='<div class="form-row">'+
+    '<div class="field"><label>Username *</label><input id="a_user" placeholder="vd: xuongck"></div>'+
+    '<div class="field"><label>Tên hiển thị</label><input id="a_name" placeholder="vd: Xưởng cơ khí"></div>'+
+    '<div class="field"><label>Mật khẩu *</label><input id="a_pass" type="text" placeholder="Tự đặt mật khẩu"></div>'+
+    '</div><div class="field"><label>Xưởng *</label><select id="a_ws">'+state.workshops.map(function(w){return '<option value="'+w.id+'">'+esc(w.name)+'</option>';}).join('')+'</select></div>';
+  openModal({title:'Cấp tài khoản xưởng',body:body,
+    footer:'<button class="btn btn-secondary" data-close>Hủy</button><button class="btn btn-primary" id="saveAcc">Tạo tài khoản</button>',
+    onMount:function(ov,close){
+      $('#saveAcc',ov).addEventListener('click',function(){
+        var user=$('#a_user',ov).value.trim().toLowerCase();var pass=$('#a_pass',ov).value;
+        if(!user||!pass){toast('Nhập đủ username & mật khẩu','error');return;}
+        if(!/^[a-z0-9_.-]{3,}$/.test(user)){toast('Username chỉ dùng chữ thường, số, 3-30 ký tự','error');return;}
+        var wid=$('#a_ws',ov).value;
+        showLoading('Đang tạo…');
+        db.collection('users').doc(user).get().then(function(snap){
+          if(snap.exists)throw new Error('Username đã tồn tại');
+          return hashPw(pass);
+        }).then(function(h){
+          return db.collection('users').doc(user).set({username:user,displayName:$('#a_name',ov).value.trim()||user,passwordHash:h,role:'workshop',workshopId:wid,active:true,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        }).then(function(){close();toast('Đã tạo tài khoản '+user,'success');renderView();hideLoading();})
+        .catch(function(e){hideLoading();toast(e.message,'error');});
+      });
+    }});
+}
+function resetPassword(uid){
+  var np=prompt('Nhập mật khẩu mới cho tài khoản "'+uid+'":');
+  if(!np)return;
+  showLoading();hashPw(np).then(function(h){return db.collection('users').doc(uid).set({passwordHash:h},{merge:true});})
+  .then(function(){hideLoading();toast('Đã đặt lại mật khẩu','success');}).catch(function(e){hideLoading();toast(e.message,'error');});
+}
+
+/* ==================== ADMIN: OPS (phát/thu hồi/sửa SL) ==================== */
+function renderOps(c){
+  var matOpts=state.materials.map(function(m){return '<option value="'+m.id+'">'+esc(m.code+' · '+m.name)+' (kho tổng: '+fmt(centralOf(m.id))+')</option>';}).join('');
+  var wsOpts=state.workshops.map(function(w){return '<option value="'+w.id+'">'+esc(w.name)+'</option>';}).join('');
+  c.innerHTML='<div class="grid-2">'+
+    opCard('distribute','Phát hàng cho xưởng','arrow-right','badge-blue','Chuyển vật tư từ kho tổng sang xưởng',matOpts,wsOpts,'Số lượng phát','Phát hàng'),
+    opCard('recall','Thu hồi về kho tổng','arrow-left','badge-amber','Thu hồi số lượng thừa từ xưởng về kho tổng',matOpts,wsOpts,'Số lượng thu hồi','Thu hồi'),
+  '</div>'+
+  '<div class="card"><div class="card-head"><h3>Chỉnh sửa số lượng thực tế</h3><span class="badge badge-cyan">Đối chiếu thực tế</span></div>'+
+  '<div class="card-body"><div class="form-row">'+
+    '<div class="field"><label>Vật tư</label><select id="ad_mat">'+matOpts+'</select></div>'+
+    '<div class="field"><label>Đối tượng</label><select id="ad_target"><option value="central">Kho tổng</option>'+state.workshops.map(function(w){return '<option value="'+w.id+'">'+esc(w.name)+'</option>';}).join('')+'</select></div>'+
+    '<div class="field"><label>Số lượng thực tế</label><input type="number" min="0" id="ad_qty" placeholder="Nhập số thực tế"></div>'+
+    '<div class="field"><label>Ghi chú</label><input id="ad_note" placeholder="Lý do đối chiếu…"></div>'+
+  '</div><button class="btn btn-primary" id="ad_go"><i data-lucide="check"></i>Cập nhật số thực tế</button><div class="help-text">Hệ thống tự tính chênh lệch và lưu lịch sử điều chỉnh.</div></div></div>';
+  bindOp('distribute');bindOp('recall');
+  // adjust
+  $('#ad_go').addEventListener('click',function(){
+    var mid=$('#ad_mat').value;var target=$('#ad_target').value;var qty=Number($('#ad_qty').value);
+    if(!mid||isNaN(qty)||qty<0){toast('Nhập số lượng hợp lệ','error');return;}
+    var old=target==='central'?centralOf(mid):wsStock(mid,target);
+    var m=state.materials.find(function(x){return x.id===mid;});
+    var note=($('#ad_note').value||'Chỉnh sửa số thực tế')+' ('+fmt(old)+' → '+fmt(qty)+')';
+    showLoading('Đang cập nhật…');
+    stockOp({type:'adjust',materialId:mid,workshopId:target==='central'?null:target,quantity:qty,absolute:qty,note:note})
+    .then(function(){toast('Đã cập nhật','success');return loadCore();}).then(function(){renderView();hideLoading();})
+    .catch(function(e){hideLoading();toast(e.message,'error');});
+  });
+  refreshIcons();
+}
+function opCard(type,title,icon,badge,desc,matOpts,wsOpts,qtyLabel,btnLabel){
+  return '<div class="card"><div class="card-head"><h3>'+title+'</h3><span class="badge '+badge+'"><i data-lucide="'+icon+'"></i></span></div>'+
+  '<div class="card-body"><div class="muted small mb-2">'+desc+'</div>'+
+  '<div class="field"><label>Vật tư</label><select data-op="'+type+'" data-f="mat">'+matOpts+'</select></div>'+
+  '<div class="field"><label>Xưởng</label><select data-op="'+type+'" data-f="ws">'+wsOpts+'</select><div class="stock-hint" data-op="'+type+'" data-f="hint">—</div></div>'+
+  '<div class="field"><label>'+qtyLabel+'</label><input type="number" min="1" data-op="'+type+'" data-f="qty" placeholder="Nhập số lượng"></div>'+
+  '<div class="field"><label>Ghi chú (tùy chọn)</label><input data-op="'+type+'" data-f="note" placeholder="Ghi chú…"></div>'+
+  '<button class="btn btn-primary btn-block" data-op="'+type+'" data-f="go">'+btnLabel+'</button></div></div>';
+}
+function bindOp(type){
+  var sel=function(f){return $('[data-op="'+type+'"][data-f="'+f+'"]');};
+  function updHint(){
+    var mid=sel('mat').value;var wid=sel('ws').value;if(!mid||!wid){sel('hint').innerHTML='—';return;}
+    var m=state.materials.find(function(x){return x.id===mid;});
+    sel('hint').innerHTML=type==='distribute'
+      ?'Kho tổng còn: <b>'+fmt(centralOf(mid))+' '+esc(m.unit||'')+'</b> · Xưởng đang có: <b>'+fmt(wsStock(mid,wid))+'</b>'
+      :'Xưởng đang có: <b>'+fmt(wsStock(mid,wid))+' '+esc(m.unit||'')+'</b> (sẽ thu về kho tổng)';
+  }
+  sel('mat').addEventListener('change',updHint);sel('ws').addEventListener('change',updHint);updHint();
+  sel('go').addEventListener('click',function(){
+    var mid=sel('mat').value;var wid=sel('ws').value;var qty=Number(sel('qty').value);
+    if(!mid||!wid||!qty||qty<=0){toast('Chọn đủ vật tư, xưởng và số lượng','error');return;}
+    var note=sel('note').value||'';
+    showLoading(type==='distribute'?'Đang phát hàng…':'Đang thu hồi…');
+    var opts=type==='distribute'
+      ?{type:'distribute',materialId:mid,workshopId:wid,centralDelta:-qty,workshopDelta:+qty,quantity:qty,note:note}
+      :{type:'recall',materialId:mid,workshopId:wid,centralDelta:+qty,workshopDelta:-qty,quantity:qty,note:note};
+    stockOp(opts).then(function(){toast(type==='distribute'?'Đã phát hàng':'Đã thu hồi','success');return loadCore();}).then(function(){renderView();hideLoading();})
+    .catch(function(e){hideLoading();toast(e.message,'error');});
+  });
+}
+
+/* ==================== ADMIN: RECEIVE GOODS ==================== */
+function renderReceive(c){
+  var matOpts=state.materials.map(function(m){return '<option value="'+m.id+'">'+esc(m.code+' · '+m.name)+' (hiện có: '+fmt(centralOf(m.id))+')</option>';}).join('');
+  c.innerHTML='<div class="grid-2">'+
+    '<div class="card"><div class="card-head"><h3>Nhập hàng kho tổng</h3><span class="badge badge-green"><i data-lucide="package-plus"></i>Nhập mới</span></div>'+
+    '<div class="card-body">'+
+    '<div class="field"><label>Vật tư</label><select id="rv_mat">'+matOpts+'</select><div class="help-text">Nếu vật tư chưa có, thêm tại <b>Danh mục vật tư</b> trước.</div></div>'+
+    '<div class="form-row"><div class="field"><label>Số lượng nhập</label><input type="number" min="1" id="rv_qty" placeholder="VD: 500"></div>'+
+    '<div class="field"><label>Ghi chú</label><input id="rv_note" placeholder="VD: Đơn hàng tháng 9 / nhà cung cấp…"></div></div>'+
+    '<button class="btn btn-success btn-block" id="rv_go"><i data-lucide="download"></i>Xác nhận nhập hàng</button></div></div>'+
+    '<div class="card"><div class="card-head"><h3>Lịch sử nhập hàng</h3></div><div class="table-wrap"><table class="data"><thead><tr><th>Thời gian</th><th>Vật tư</th><th class="num">SL nhập</th><th>Ghi chú</th></tr></thead><tbody id="rvBody"><tr><td colspan="4" class="muted">Đang tải…</td></tr></tbody></table></div></div>'+
+  '</div>';
+  $('#rv_go').addEventListener('click',function(){
+    var mid=$('#rv_mat').value;var qty=Number($('#rv_qty').value);
+    if(!mid||!qty||qty<=0){toast('Chọn vật tư và số lượng','error');return;}
+    showLoading('Đang ghi nhận…');
+    stockOp({type:'receive',materialId:mid,workshopId:null,centralDelta:+qty,quantity:qty,note:$('#rv_note').value||''})
+    .then(function(){toast('Đã nhập hàng','success');$('#rv_qty').value='';$('#rv_note').value='';return loadCore();}).then(function(){renderView();hideLoading();})
+    .catch(function(e){hideLoading();toast(e.message,'error');});
+  });
+  db.collection('transactions').where('type','==','receive').limit(200).get().then(function(q){
+    var rows=q.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    rows.sort(function(a,b){var ta=a.createdAt?a.createdAt.toMillis():0,tb=b.createdAt?b.createdAt.toMillis():0;return tb-ta;});
+    $('#rvBody').innerHTML=rows.length?rows.map(function(tx){return '<tr><td>'+fmtDate(tx.createdAt)+'</td><td><span class="strong">'+esc(tx.materialName)+'</span><div class="muted small">'+esc(tx.materialCode)+'</div></td><td class="num">'+fmt(tx.quantity)+' '+esc(tx.unit||'')+'</td><td class="muted small">'+esc(tx.note||'')+'</td></tr>';}).join(''):'<tr><td colspan="4"><div class="empty-state">Chưa có lần nhập nào</div></td></tr>';
+  }).catch(function(e){$('#rvBody').innerHTML='<tr><td colspan="4" class="muted">'+esc(e.message)+'</td></tr>';});
+  refreshIcons();
+}
+
+/* ==================== ADMIN: SUMMARY ==================== */
+function renderSummary(c){
+  c.innerHTML='<div class="toolbar">'+
+    '<div class="search-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="sumSearch" placeholder="Tìm vật tư…"></div>'+
+    '<label class="flex"><input type="checkbox" id="sumOnlyLow" style="width:16px;height:16px;accent-color:var(--primary)"> <span class="small">Chỉ xem vật tư sắp hết (kho tổng ≤ 5)</span></label>'+
+    '<button class="btn btn-secondary" id="sumExport"><i data-lucide="file-down"></i>Xuất Excel</button></div>'+
+  '<div class="card"><div class="table-wrap"><table class="data"><thead id="sumHead"></thead><tbody id="sumBody"></tbody></table></div></div>';
+  function draw(){
+    var kw=noAccent($('#sumSearch').value);var onlyLow=$('#sumOnlyLow').checked;
+    var list=state.materials.filter(function(m){return (!kw||noAccent(m.name+' '+m.code).indexOf(kw)>=0)&&(!onlyLow||centralOf(m.id)<=5);});
+    $('#sumHead').innerHTML='<tr><th>Mã</th><th>Tên vật tư</th><th>ĐVT</th><th>Phân bổ</th><th class="num">Kho tổng</th>'+
+      state.workshops.map(function(w){return '<th class="num">'+esc(w.name)+'</th>';}).join('')+
+      '<th class="num">Tổng tồn</th></tr>';
+    $('#sumBody').innerHTML=list.length?list.map(function(m){
+      var aw=m.assignedWorkshops||[];var alloc=aw.length===0?'<span class="badge badge-green">chung</span>':aw.map(function(w){return '<span class="badge badge-blue">'+esc(workshopName(w))+'</span>';}).join(' ');
+      var wsTotal=state.workshops.reduce(function(s,w){return s+wsStock(m.id,w.id);},0);
+      var ct=centralOf(m.id);
+      return '<tr><td class="strong">'+esc(m.code||'')+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.unit||'')+'</td><td style="max-width:200px">'+alloc+'</td>'+
+      '<td class="num '+(ct<=0?'badge-red':(ct<=5?'badge-amber':''))+'" style="font-weight:700">'+fmt(ct)+'</td>'+
+      state.workshops.map(function(w){var s=wsStock(m.id,w.id);return '<td class="num '+(s<=0?'muted':'')+'">'+fmt(s)+'</td>';}).join('')+
+      '<td class="num strong">'+fmt(ct+wsTotal)+'</td></tr>';
+    }).join(''):'<tr><td colspan="'+(5+state.workshops.length)+'"><div class="empty-state">Không có dữ liệu</div></td></tr>';
+  }
+  $('#sumSearch').addEventListener('input',draw);$('#sumOnlyLow').addEventListener('change',draw);
+  $('#sumExport').addEventListener('click',function(){
+    var rows=state.materials.map(function(m){
+      var o={'Mã vật tư':m.code||'','Tên vật tư':m.name,'Đơn vị':m.unit||'','Kho tổng':centralOf(m.id)};
+      state.workshops.forEach(function(w){o[w.name]=wsStock(m.id,w.id);});
+      o['Tổng tồn']=centralOf(m.id)+state.workshops.reduce(function(s,w){return s+wsStock(m.id,w.id);},0);
+      return o;
+    });
+    var ws=XLSX.utils.json_to_sheet(rows);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'TonKho');
+    XLSX.writeFile(wb,'tong-hop-ton-kho.xlsx');toast('Đã xuất Excel','success');
+  });
+  draw();refreshIcons();
+}
+
+/* ==================== HISTORY (admin + workshop) ==================== */
+function renderHistory(c){renderHistoryTable(c,null);}
+function renderMyHistory(c){renderHistoryTable(c,state.user.workshopId);}
+function renderHistoryTable(c,workshopFilter){
+  var typeOpts='<option value="">Tất cả loại</option>'+[['receive','Nhập hàng'],['distribute','Phát hàng'],['recall','Thu hồi'],['consume','Tiêu hao'],['adjust','Chỉnh sửa'],['import','Nhập Excel']].map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('');
+  var wsOpts=workshopFilter?'':('<option value="">Tất cả xưởng</option>'+state.workshops.map(function(w){return '<option value="'+w.id+'">'+esc(w.name)+'</option>';}).join(''));
+  c.innerHTML='<div class="toolbar">'+
+    '<div class="search-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="hSearch" placeholder="Tìm vật tư, người thực hiện…"></div>'+
+    '<select class="filter" id="hType">'+typeOpts+'</select>'+
+    (wsOpts?'<select class="filter" id="hWs">'+wsOpts+'</select>':'')+
+    '<button class="btn btn-secondary" id="hExport"><i data-lucide="file-down"></i>Xuất Excel</button></div>'+
+  '<div class="card"><div class="table-wrap"><table class="data"><thead><tr><th>Thời gian</th><th>Loại</th><th>Vật tư</th><th class="num">Số lượng</th><th>Xưởng</th><th>Người thực hiện</th><th>Ghi chú</th></tr></thead><tbody id="hBody"><tr><td colspan="7" class="muted">Đang tải…</td></tr></tbody></table></div></div>';
+  var all=[];
+  var q=workshopFilter?db.collection('transactions').where('workshopId','==',workshopFilter).limit(500):db.collection('transactions').orderBy('createdAt','desc').limit(500);
+  q.get().then(function(snap){
+    all=snap.docs.map(function(d){return Object.assign({id:d.id},d.data());});
+    all.sort(function(a,b){var ta=a.createdAt?a.createdAt.toMillis():0,tb=b.createdAt?b.createdAt.toMillis():0;return tb-ta;});
+    draw();
+  }).catch(function(e){$('#hBody').innerHTML='<tr><td colspan="7" class="muted">Lỗi: '+esc(e.message)+'</td></tr>';});
+  function draw(){
+    var kw=noAccent($('#hSearch').value);var type=$('#hType').value;var ws=$('#hWs')?$('#hWs').value:'';
+    var list=all.filter(function(t){
+      if(type&&t.type!==type)return false;
+      if(ws&&t.workshopId!==ws)return false;
+      if(kw&&noAccent((t.materialName||'')+' '+(t.materialCode||'')+' '+(t.createdBy||'')+' '+(t.note||'')).indexOf(kw)<0)return false;
+      return true;
+    });
+    $('#hBody').innerHTML=list.length?list.map(txRow).join(''):'<tr><td colspan="7"><div class="empty-state">Không có giao dịch nào</div></td></tr>';
+  }
+  $('#hSearch').addEventListener('input',draw);$('#hType').addEventListener('change',draw);
+  if($('#hWs'))$('#hWs').addEventListener('change',draw);
+  $('#hExport').addEventListener('click',function(){
+    var rows=all.map(function(t){return {'Thời gian':fmtDate(t.createdAt),'Loại':t.type,'Mã VT':t.materialCode,'Tên vật tư':t.materialName,'Đơn vị':t.unit||'','Số lượng':t.quantity,'Xưởng':t.workshopId?workshopName(t.workshopId):'','Người thực hiện':t.createdBy,'Ghi chú':t.note||''};});
+    var ws=XLSX.utils.json_to_sheet(rows);var wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'LichSu');
+    XLSX.writeFile(wb,'lich-su-giao-dich.xlsx');toast('Đã xuất Excel','success');
+  });
+  refreshIcons();
+}
+
+/* ==================== WORKSHOP: MY MATERIALS + CONSUME ==================== */
+function renderMyMaterials(c){
+  var list=visibleMaterials();
+  c.innerHTML='<div class="toolbar"><div class="search-box"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input id="mySearch" placeholder="Tìm vật tư…"></div>'+
+  '<span class="badge badge-blue">Xưởng: '+esc(workshopName(state.user.workshopId))+'</span></div>'+
+  '<div class="card"><div class="table-wrap"><table class="data"><thead><tr><th>Ảnh</th><th>Mã</th><th>Tên vật tư</th><th>ĐVT</th><th>Loại</th><th class="num">Tồn còn lại</th><th>Tiêu hao hôm nay</th></tr></thead><tbody id="myBody"></tbody></table></div></div>'+
+  '<div class="help-text">Nhập số lượng đã dùng trong ngày vào ô bên phải rồi bấm <b>Ghi nhận</b>. Tồn của xưởng sẽ tự động trừ đi và lưu lịch sử.</div>';
+  function draw(){
+    var kw=noAccent($('#mySearch').value);
+    var rows=list.filter(function(m){return !kw||noAccent(m.name+' '+m.code).indexOf(kw)>=0;});
+    $('#myBody').innerHTML=rows.length?rows.map(function(m){
+      var aw=m.assignedWorkshops||[];var shared=aw.length===0||aw.indexOf(state.user.workshopId)<0;
+      var stk=wsStock(m.id,state.user.workshopId);
+      return '<tr data-mid="'+m.id+'"><td>'+(m.imageUrl?'<img src="'+esc(m.imageUrl)+'" class="thumb" loading="lazy" onerror="this.style.display=\'none\'">':'<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#cbd5e1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg></div>')+'</td>'+
+      '<td class="strong">'+esc(m.code||'')+'</td><td>'+esc(m.name)+'</td><td>'+esc(m.unit||'')+'</td>'+
+      '<td>'+(shared?'<span class="badge badge-green">Dùng chung</span>':'<span class="badge badge-blue">Xưởng bạn</span>')+'</td>'+
+      '<td class="num '+(stk<=0?'badge-red':(stk<=5?'badge-amber':''))+'" style="font-weight:700">'+fmt(stk)+'</td>'+
+      '<td><div class="consume-row"><input type="number" min="1" class="qty-input" data-qty placeholder="SL"><button class="btn btn-success btn-sm" data-consume="'+m.id+'">Ghi nhận</button></div></td></tr>';
+    }).join(''):'<tr><td colspan="7"><div class="empty-state">Chưa có vật tư nào được phân bổ cho xưởng bạn</div></td></tr>';
+    $$('#myBody [data-consume]').forEach(function(b){b.addEventListener('click',function(){
+      var mid=b.dataset.consume;var row=b.closest('tr');var qty=Number(row.querySelector('[data-qty]').value);
+      if(!qty||qty<=0){toast('Nhập số lượng tiêu hao','error');return;}
+      var stk=wsStock(mid,state.user.workshopId);
+      if(qty>stk){toast('Vượt quá tồn còn lại ('+fmt(stk)+')','error');return;}
+      showLoading('Đang ghi nhận…');
+      stockOp({type:'consume',materialId:mid,workshopId:state.user.workshopId,workshopDelta:-qty,quantity:qty,note:'Tiêu hao hàng ngày'})
+      .then(function(){toast('Đã ghi nhận tiêu hao '+fmt(qty),'success');return loadCore();}).then(function(){renderView();hideLoading();})
+      .catch(function(e){hideLoading();toast(e.message,'error');});
+    });});
+  }
+  $('#mySearch').addEventListener('input',draw);
+  draw();refreshIcons();
+}
+
+/* ==================== CHANGE PASSWORD ==================== */
+function renderPassword(c){
+  c.innerHTML='<div class="card" style="max-width:480px"><div class="card-head"><h3>Đổi mật khẩu</h3></div><div class="card-body">'+
+    '<div class="field"><label>Mật khẩu hiện tại</label><input type="password" id="pw_old"></div>'+
+    '<div class="field"><label>Mật khẩu mới</label><input type="password" id="pw_new"></div>'+
+    '<div class="field"><label>Xác nhận mật khẩu mới</label><input type="password" id="pw_confirm"></div>'+
+    '<button class="btn btn-primary" id="pw_go">Cập nhật mật khẩu</button></div></div>';
+  $('#pw_go').addEventListener('click',function(){
+    var o=$('#pw_old').value,n=$('#pw_new').value,c2=$('#pw_confirm').value;
+    if(!o||!n){toast('Nhập đầy đủ','error');return;}
+    if(n.length<4){toast('Mật khẩu mới tối thiểu 4 ký tự','error');return;}
+    if(n!==c2){toast('Xác nhận mật khẩu không khớp','error');return;}
+    showLoading('Đang kiểm tra…');
+    hashPw(o).then(function(h){
+      return db.collection('users').doc(state.user.username).get().then(function(snap){
+        if(!snap.exists||snap.data().passwordHash!==h)throw new Error('Mật khẩu hiện tại sai');
+        return hashPw(n);
+      });
+    }).then(function(h2){return db.collection('users').doc(state.user.username).set({passwordHash:h2},{merge:true});})
+    .then(function(){hideLoading();toast('Đã đổi mật khẩu','success');$('#pw_old').value='';$('#pw_new').value='';$('#pw_confirm').value='';})
+    .catch(function(e){hideLoading();toast(e.message,'error');});
+  });
+}
+
+/* ==================== BOOT ==================== */
+function enterApp(){
+  $('#loginScreen').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  $('#userName').textContent=state.user.displayName||state.user.username;
+  $('#userRole').textContent=state.user.role==='admin'?'Quản trị viên · Kho tổng':workshopName(state.user.workshopId);
+  $('#userAvatar').textContent=(state.user.displayName||state.user.username).charAt(0).toUpperCase();
+  state.tab=state.user.role==='admin'?'dashboard':'mymaterials';
+  renderNav();
+  showLoading('Đang tải dữ liệu…');
+  loadCore().then(function(){hideLoading();renderView();}).catch(function(e){hideLoading();toast('Lỗi tải dữ liệu: '+e.message,'error');renderView();});
+}
+$('#loginForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  var u=$('#loginUser').value,p=$('#loginPass').value;
+  var err=$('#loginError');err.style.display='none';
+  $('#loginBtn').disabled=true;
+  doLogin(u,p).then(function(){enterApp();}).catch(function(e){
+    err.textContent=e.message;err.style.display='block';$('#loginBtn').disabled=false;
+  });
+});
+$('#logoutBtn').addEventListener('click',logout);
+$('#menuToggle').addEventListener('click',function(){$('#sidebar').classList.toggle('open');$('#sidebarOverlay').classList.toggle('show');});
+$('#sidebarOverlay').addEventListener('click',function(){$('#sidebar').classList.remove('open');$('#sidebarOverlay').classList.remove('show');});
+
+showLoading('Đang khởi động…');
+ensureAdmin().then(function(){return restoreSession();}).then(function(u){
+  hideLoading();
+  if(u)enterApp();
+}).catch(function(e){
+  hideLoading();
+  var err=$('#loginError');err.textContent='Không kết nối được Firebase. Vui lòng kiểm tra đã bật Firestore trong Firebase Console. ('+e.message+')';err.style.display='block';
+});
+
+})();
+</script>
+</body>
+</html>
